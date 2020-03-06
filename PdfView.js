@@ -85,9 +85,6 @@ export default class PdfView extends Component {
 
     }
 
-    componentWillMount() {
-    }
-
     componentDidMount() {
         this._mounted = true;
         PdfManager.loadFile(this.props.path, this.props.password)
@@ -125,18 +122,18 @@ export default class PdfView extends Component {
         }, 200);
     }
 
-    componentWillReceiveProps(nextProps) {
+    componentDidUpdate(prevProps) {
 
-        if (nextProps.scale !== this.state.scale) {
+        if (this.props.scale !== this.state.scale) {
             this._onScaleChanged({
-                scale: nextProps.scale / this.state.scale,
+                scale: this.props.scale / this.state.scale,
                 pageX: this.state.contentContainerSize.width / 2,
                 pageY: this.state.contentContainerSize.height / 2
             });
         }
 
-        if (nextProps.horizontal !== this.props.horizontal || nextProps.page !== this.props.page) {
-            let page = (nextProps.page) < 1 ? 1 : nextProps.page;
+        if (this.props.horizontal !== prevProps.horizontal || this.props.page !== prevProps.page) {
+            let page = (this.props.page) < 1 ? 1 : this.props.page;
             page = page > this.state.numberOfPages ? this.state.numberOfPages : page;
 
             if (this._flatList) {

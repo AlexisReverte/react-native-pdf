@@ -45,7 +45,6 @@ const float MIN_SCALE = 1.0f;
     float _fixScaleFactor;
     bool _initialed;
     NSArray<NSString *> *_changedProps;
-    
 }
 
 - (instancetype)init
@@ -85,12 +84,22 @@ const float MIN_SCALE = 1.0f;
         [center addObserver:self selector:@selector(onScaleChanged:) name:PDFViewScaleChangedNotification object:_pdfView];
         
         [[_pdfView document] setDelegate: self];
+        [_pdfView setDelegate: self];
         
         
         [self bindTap];
     }
     
     return self;
+}
+
+- (void)PDFViewWillClickOnLink:(PDFView *)sender withURL:(NSURL *)url
+{
+    NSString *_url = url.absoluteString;
+    _onChange(@{ @"message":
+                     [[NSString alloc] initWithString:
+                      [NSString stringWithFormat:
+                       @"linkPressed|%s", _url.UTF8String]] });
 }
 
 - (void)didSetProps:(NSArray<NSString *> *)changedProps
@@ -136,8 +145,26 @@ const float MIN_SCALE = 1.0f;
         if (_pdfDocument && ([changedProps containsObject:@"path"] || [changedProps containsObject:@"spacing"])) {
             if (_horizontal) {
                 _pdfView.pageBreakMargins = UIEdgeInsetsMake(0,_spacing,0,0);
+                if (_spacing==0) {
+                    if (@available(iOS 12.0, *)) {
+                        _pdfView.pageShadowsEnabled = NO;
+                    }
+                } else {
+                    if (@available(iOS 12.0, *)) {
+                        _pdfView.pageShadowsEnabled = YES;
+                    }
+                }
             } else {
                 _pdfView.pageBreakMargins = UIEdgeInsetsMake(0,0,_spacing,0);
+                if (_spacing==0) {
+                    if (@available(iOS 12.0, *)) {
+                        _pdfView.pageShadowsEnabled = NO;
+                    }
+                } else {
+                    if (@available(iOS 12.0, *)) {
+                        _pdfView.pageShadowsEnabled = YES;
+                    }
+                }
             }
         }
         
@@ -150,8 +177,7 @@ const float MIN_SCALE = 1.0f;
                 for (unsigned long i=0; i<_pdfView.document.pageCount; i++) {
                     PDFPage *pdfPage = [_pdfView.document pageAtIndex:i];
                     for (unsigned long j=0; j<pdfPage.annotations.count; j++) {
-                        [pdfPage removeAnnotation:pdfPage.annotations[j]];
-                        //pdfPage.annotations[j].shouldDisplay = _enableAnnotationRendering;
+                        pdfPage.annotations[j].shouldDisplay = _enableAnnotationRendering;
                     }
                 }
             }
@@ -406,17 +432,19 @@ const float MIN_SCALE = 1.0f;
     float min = _pdfView.minScaleFactor/_fixScaleFactor;
     float max = _pdfView.maxScaleFactor/_fixScaleFactor;
     float mid = (max - min) / 2 + min;
+    float scale = _scale;
     if (_scale < mid) {
-        _scale = mid;
+        scale = mid;
     } else if (_scale < max) {
-        _scale = max;
+        scale = max;
     } else {
-        _scale = min;
+        scale = min;
     }
-
-    _pdfView.scaleFactor = _scale*_fixScaleFactor;
-
-    [self setNeedsDisplay];    
+    
+    _pdfView.scaleFactor = scale*_fixScaleFactor;
+    
+    [self setNeedsDisplay];
+    [self onScaleChanged:Nil];
 }
 
 /**
@@ -427,9 +455,8 @@ const float MIN_SCALE = 1.0f;
  */
 - (void)handleSingleTap:(UITapGestureRecognizer *)sender
 {
-    
-    _scale = _pdfView.minScaleFactor/_fixScaleFactor;
-    _pdfView.scaleFactor = _pdfView.minScaleFactor;
+	
+    //_pdfView.scaleFactor = _pdfView.minScaleFactor;
     
     CGPoint point = [sender locationInView:self];
     PDFPage *pdfPage = [_pdfView pageForPoint:point nearest:NO];
@@ -438,7 +465,9 @@ const float MIN_SCALE = 1.0f;
         _onChange(@{ @"message": [[NSString alloc] initWithString:[NSString stringWithFormat:@"pageSingleTap|%lu", page+1]]});
     }
     
-    [self setNeedsDisplay];
+    //[self setNeedsDisplay];
+    //[self onScaleChanged:Nil];
+    
     
 }
 

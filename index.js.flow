@@ -6,7 +6,7 @@ import { Component } from 'react';
 
 import type { Node } from 'react';
 import type { FormField, Methods } from 'rn-fetch-blob';
-import type { ViewStyleProp } from 'StyleSheet';
+import type { ViewStyleProp } from 'react-native/Libraries/StyleSheet/StyleSheet'
 
 export type AssetId = number;
 
@@ -47,6 +47,7 @@ export type Props = {
   onPageChanged?: (page: number, numberOfPages: number) => void,
   onPageSingleTap?: (page: number) => void,
   onScaleChanged?: (scale: number) => void,
+  onPressLink?: (url: string) => void,
   page?: number,
   password?: string,
   scale?: number,
